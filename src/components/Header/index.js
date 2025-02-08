@@ -1,18 +1,34 @@
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
+import { signOutUser } from '../../redux/user/slice';
 
-export default function Header(){
+
+export default function Header() {
+
+    const dispatch = useDispatch();
 
     const { user } = useSelector((rootReducer) => rootReducer.user);
 
-    return(
+    async function handleLogout() {
+        await dispatch(signOutUser());
+    }
+
+    return (
 
         <div>
+            {user ? (
+                <h3>
+                    Bem vindo(a), {user?.name}!
+                    
+                </h3>
+            ) :
+                (
+                    <h3>
+                        Bem vindo(a), Fulano!
+                    </h3>
+                )
+            }
 
-            <h3>
-                Bem vindo(a), {user.login}! 
-            </h3>
-
-            <button>Fazer Login</button>
+            <button onClick={handleLogout}>Logout</button>
 
         </div>
 

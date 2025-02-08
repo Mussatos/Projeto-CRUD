@@ -1,19 +1,42 @@
 import { useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import { registerUser } from '../../redux/user/slice';
+import { useNavigate } from 'react-router'
+import { checkLoginUser } from '../../redux/user/slice'
+import { useEffect } from 'react';
 
 export default function Register() {
 
     const dispatch = useDispatch();
 
+    const navigate = useNavigate();
+
     const { register, handleSubmit } = useForm()
 
+    useEffect(() => {
+        async function checkLogin() {
+            const localDoc = localStorage.getItem('@ticketsPRO');
+            const storageUser = JSON.parse(localDoc);
+
+            if (storageUser) {
+                dispatch(checkLoginUser({
+                    name: storageUser.name,
+                    email: storageUser.email,
+                    uid: storageUser.uid,
+                }))
+                navigate('/home');
+            }
+        }
+        checkLogin();
+    }, [])
+
     async function handleRegister(data) {
-        dispatch(registerUser({
+        await dispatch(registerUser({
             name: data.name,
             email: data.email,
             password: data.password,
         }))
+        navigate('/home');
     }
 
     return (
@@ -40,7 +63,7 @@ export default function Register() {
                     id='password'
                     placeholder='Digite sua senha...' />
 
-                <label>Confirmar senha</label>    
+                <label>Confirmar senha</label>
                 <input type='password'
                     placeholder='Repita sua senha...' />
 

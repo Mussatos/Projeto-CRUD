@@ -1,16 +1,17 @@
 import { all, takeLatest, call, put } from 'redux-saga/effects'
 import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
 
-import { loginUserSuccess, loginUserFailure } from './slice';
+import { loginUserSuccess, loginUserFailure, registerUserSuccess, registerUserFailure, storageUser } from './slice';
 
 import { auth, db } from '../../services/firebaseConnection';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 
 function* loginUser(action) {
+    
     try {
         const infosUser = action.payload;
-        
+
         const userCredentials = yield call(
             signInWithEmailAndPassword, auth, infosUser.email, infosUser.password
         );
@@ -21,11 +22,10 @@ function* loginUser(action) {
 
         const docSnap = yield call(getDoc, docRef);
 
-        if(docSnap.exists()){
+        if (docSnap.exists()) {
             const userData = docSnap.data();
-            console.log('Usuário encontrado', userData)
-
             yield put(loginUserSuccess(userData))
+            yield put(storageUser(userData))
         }
 
     }
@@ -52,14 +52,36 @@ function* registerUser(action) {
 
         console.log('Usuário cadastrado com sucesso!', user);
 
+        const docRef = doc(db, 'users', user.uid);
+
+        const docSnap = yield call(getDoc, docRef);
+
+        if (docSnap.exists()) {
+            const userData = docSnap.data();
+            yield put(registerUserSuccess(userData))
+            yield put(storageUser(userData))
+        }
+
     }
     catch (error) {
-        console.log('deu ruim no cadastro', error)
+        yield put(registerUserFailure(error.message));
     }
+}
+
+function* signOutUser() {
+    try {
+        yield call(signOut, auth);
+        localStorage.removeItem('@ticketsPRO');
+    }
+    catch (error) {
+        console.log(error.message);
+    }
+
 }
 
 
 export default all([
     takeLatest("user/loginUser", loginUser),
     takeLatest("user/registerUser", registerUser),
+    takeLatest("user/signOutUser", signOutUser)
 ])
